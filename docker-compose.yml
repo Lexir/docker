@@ -4,7 +4,16 @@ services:
     # The official v2.0 Traefik docker image
     image: traefik:v2.0
     # Enables the web UI and tells Traefik to listen to docker
-    command: --api.insecure=true --providers.docker
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--metrics=true"
+      - "--metrics.datadog=true"
+      - "--metrics.datadog.address='127.0.0.1:8125'"
+      - "--tracing=true"
+      - "--tracing.serviceName='traefik'"
+      - "--tracing.datadog=true"
+      - "--tracing.datadog.localAgentHostPort='127.0.0.1:8126'"
     container_name: reverse-proxy
     ports:
       # The HTTP port
