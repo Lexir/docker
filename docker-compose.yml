@@ -1,0 +1,53 @@
+version: '3.1'
+services:
+  reverse-proxy:
+    # The official v2.0 Traefik docker image
+    image: traefik:v2.0
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    container_name: reverse-proxy
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - gate
+      - whoami
+
+  whoami:
+    # A container that exposes an API to show its IP address
+    image: containous/whoami
+    container_name: whoami
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+  # hw:
+  #   image: hello-world:latest-nanoserver-1803
+  #   container_name: hw
+  #   labels:
+  #     - "traefik.http.routers.hw.rule=Host(`hw.localhost`)"
+  postgres:
+    image: postgres:9.5-alpine
+    container_name: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: gate
+    labels:
+      - "traefik.enable=false"
+  gate:
+    build: ./spring/gate
+    container_name: gate
+    expose:
+      - 80/tcp
+    labels:
+      - "traefik.http.routers.gate.rule=Host(`gate.trusted.ru`)"
+    depends_on:
+      - postgres
+  
+  
